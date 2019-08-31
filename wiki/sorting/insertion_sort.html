@@ -1,0 +1,41 @@
+<!DOCTYPE html><head><meta charset="UTF-8"><style>body {
+    background-color: #dddddd;
+    margin: 0;
+}
+
+nav {
+    background-color: #ffffff;
+    padding: 1em;
+    box-shadow: 0px 5px 3px grey;
+}
+
+.wrapper {
+    background-color: #ffffff;
+    box-shadow: 5px 5px 3px grey;
+    margin: auto;
+    margin-top: 20px;
+    width: 60%;
+    padding: 20px;
+}
+
+footer {
+    color: #333333;
+    text-align: center;
+    margin: auto;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+</style></head><body><nav><a href="wiki.html">wiki</a>/<a href="wiki/sorting.html">sorting</a>/<a href="wiki/sorting/insertion_sort.html">insertion_sort</a>/</nav><div class="wrapper"><h1>Insertion Sort</h1>
+<h2>Introduction</h2>
+<p>This algorithm kinda sucks.</p>
+<h2>Pseudocode</h2>
+<h2>History</h2>
+<h2>Visualization</h2>
+<h2>Blah blah</h2>
+</div><div class="wrapper"><h2>Python</h2><pre><code class="language-lang=python">def insertion_sort(a):
+    for i in range(1, len(a)):
+        j = i
+        while j &gt; 0 and a[j-1] &gt; a[j]:
+            a[j-1], a[j] = a[j], a[j-1]
+            j -= 1
+</code></pre></div><footer>Created by Terts Diepraam<br>Source code hosted on <a href="">Github</a></footer></body>
