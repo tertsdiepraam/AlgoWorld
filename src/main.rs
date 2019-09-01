@@ -90,7 +90,7 @@ fn inject_content(path: &Path, story: String, implementations: &HashMap<String, 
                 "Created by Terts Diepraam"
                     br;
                 "Source code hosted on "
-                    a href="" {"Github"}
+                    a href="https://github.com/tertsdiepraam/AlgoWorld" {"Github"}
             }
         }
     }
