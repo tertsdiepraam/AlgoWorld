@@ -24,13 +24,16 @@ fn inject_content(path: &Path, story: String, implementations: &HashMap<String, 
         }
         body {
             nav {
-                @for ancestor in path.ancestors()
+                @for (i, ancestor) in path.ancestors()
                     .collect::<Vec<&Path>>()
                     .into_iter()
-                    .skip(1)
+                    .skip(2)
+                    .enumerate()
                     .rev() {
                         @if let Some(name) = ancestor.file_name() {
-                            a href={(ancestor.to_string_lossy()) (".html")} {
+                            a href={
+                                @for _ in 0..(i+1) {("../")} (name.to_string_lossy()) (".html")
+                            } {
                                 (name.to_string_lossy())
                             }
                             "/"
