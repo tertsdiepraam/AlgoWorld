@@ -5,7 +5,7 @@ extern crate walkdir;
 extern crate maud;
 use std::env;
 use std::path::{Path, PathBuf};
-use std::fs::File;
+use std::fs::{File, create_dir_all};
 use std::io::{Read, Write, BufRead, BufReader};
 use std::collections::HashMap;
 use comrak::{markdown_to_html, ComrakOptions};
@@ -122,9 +122,15 @@ fn process_file(path: &Path, css: &String, file_extensions: &HashMap<String, Str
             subpages.push((titlecase(&name.clone().replace("_", " ")), String::from(rel_path.to_string_lossy())));
         }
 
-    let write_path = path.parent().unwrap().with_extension("html");
+    // let write_path = path.parent().unwrap().with_extension("html");
+    let write_path = Path::new("wiki")
+        .join(path.strip_prefix("wiki_src").expect("Could not strip prefix: \"wiki_src\""))
+        .parent().unwrap()
+        .with_extension("html");
+    
     println!("{}", write_path.display());
-
+    
+    create_dir_all(write_path.parent().unwrap()).expect("Could not create directory");
     let mut write_file = File::create(write_path)?;
     write_file.write_all(inject_content(
         &path,
