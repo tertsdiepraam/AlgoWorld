@@ -13,7 +13,7 @@ use walkdir::WalkDir;
 use maud::{DOCTYPE, html, Markup, PreEscaped};
 use titlecase::titlecase;
 
-fn inject_content(path: &Path, story: String, implementations: &HashMap<String, String>, subpages: &Vec<(String, String)>, css: String) -> Markup {
+fn inject_content(path: &Path, story: String, implementations: &HashMap<String, String>, subpages: &Vec<(String, String)>, css: String, tab_js: String) -> Markup {
     html! {
         (DOCTYPE)
         head {
@@ -38,37 +38,53 @@ fn inject_content(path: &Path, story: String, implementations: &HashMap<String, 
                     }
             }
 
-            .wrapper {
-                (PreEscaped(story))
-            }
+            .page {
+                div {
+                    button .tablink #defaultOpen onclick="openTab('Information', this)" {
+                        "Information"
+                    }
 
-            @if !implementations.is_empty() {
-                .wrapper {
-                    @for (title, content) in implementations {
-                        h2 {
-                            (title)
+                    @if !implementations.is_empty() {
+                        button .tablink onclick="openTab('Implementations', this)" {
+                            "Implementations"
                         }
-                        pre {
-                            code."language-lang=python" {
-                                (content)
+                    }
+                }
+
+                #Information .tabcontent .wrapper {
+                    (PreEscaped(story))
+                }
+
+                @if !implementations.is_empty() {
+                    #Implementations .tabcontent .wrapper { 
+                        @for (title, content) in implementations {
+                            h2 {
+                                (title)
+                            }
+                            pre {
+                                code."language-lang=python" {
+                                    (content)
+                                }
+                            }
+                        }
+                    }
+                }
+                script {(PreEscaped(tab_js))}
+
+                @if !subpages.is_empty() {
+                    .wrapper {
+                        h2 {"Subpages"}
+                        ul {
+                            @for (name,path) in subpages {
+                                li {
+                                    a href={(path) ".html"} {(name)}
+                                }
                             }
                         }
                     }
                 }
             }
 
-            @if !subpages.is_empty() {
-                .wrapper {
-                    h2 {"Subpages"}
-                    ul {
-                        @for (name,path) in subpages {
-                            li {
-                                a href={(path) ".html"} {(name)}
-                            }
-                        }
-                    }
-                }
-            }
 
             footer {
                 "Created by Terts Diepraam"
@@ -80,7 +96,7 @@ fn inject_content(path: &Path, story: String, implementations: &HashMap<String, 
     }
 }
 
-fn process_file(path: &Path, css: &String, file_extensions: &HashMap<String, String>) -> std::io::Result<()> {
+fn process_file(path: &Path, css: &String, tab_js: &String, file_extensions: &HashMap<String, String>) -> std::io::Result<()> {
     let mut read_file = File::open(path)?;
     let mut markdown = String::new();
     read_file.read_to_string(&mut markdown)?;
@@ -137,7 +153,8 @@ fn process_file(path: &Path, css: &String, file_extensions: &HashMap<String, Str
         html,
         &implementations,
         &subpages,
-        css.to_string()
+        css.to_string(),
+        tab_js.to_string()
     ).into_string().as_bytes())?;
 
     Ok(())
@@ -163,13 +180,17 @@ fn main() -> std::io::Result<()> {
     let mut css_file = File::open("base.css")?;
     let mut css = String::new();
     css_file.read_to_string(&mut css)?;
+    
+    let mut tab_js_file = File::open("tab.js")?;
+    let mut tab_js = String::new();
+    tab_js_file.read_to_string(&mut tab_js)?;
 
     for entry in WalkDir::new(root_path)
         .into_iter()
         .filter_map(|e| e.ok())
         .filter(|e| e.metadata().unwrap().is_file())
         .filter(|e| e.file_name().to_string_lossy().ends_with(".md")) {
-        process_file(entry.path(), &css, &file_extensions).unwrap();
+        process_file(entry.path(), &css, &tab_js, &file_extensions).unwrap();
     }
 
     Ok(())
