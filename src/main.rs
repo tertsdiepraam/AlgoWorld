@@ -1,167 +1,19 @@
 #![feature(proc_macro_hygiene)]
 
-extern crate comrak;
 extern crate walkdir;
-extern crate maud;
-use std::env;
-use std::path::{Path, PathBuf};
-use std::fs::{File, create_dir_all};
-use std::io::{Read, Write, BufRead, BufReader};
-use std::collections::HashMap;
-use comrak::{markdown_to_html, ComrakOptions};
+mod page;
+use std::{
+    env,
+    fs::{File, create_dir_all},
+    io::{Read, Write, BufRead, BufReader},
+    collections::HashMap,
+    path::Path,
+};
 use walkdir::WalkDir;
-use maud::{DOCTYPE, html, Markup, PreEscaped};
-use titlecase::titlecase;
+use page::{WikiPageToml, AlgorithmPage, CategoryPage, PageType};
+use syntect::parsing::SyntaxSet;
+use syntect::highlighting::ThemeSet;
 
-fn inject_content(path: &Path, story: String, implementations: &HashMap<String, String>, subpages: &Vec<(String, String)>, css: String, tab_js: String) -> Markup {
-    html! {
-        (DOCTYPE)
-        head {
-            meta charset="UTF-8";
-            style {
-                (css)
-            }
-        }
-        body {
-            nav {
-                @for (i, ancestor) in path.ancestors()
-                    .collect::<Vec<&Path>>()
-                    .into_iter()
-                    .skip(2)
-                    .enumerate()
-                    .rev() {
-                        @if let Some(name) = ancestor.file_name() {
-                            a href={
-                                @for _ in 0..(i+1) {("../")} (name.to_string_lossy()) (".html")
-                            } {
-                                (name.to_string_lossy())
-                            }
-                            "/"
-                        }
-                    }
-            }
-
-            .page {
-                div {
-                    button .tablink #defaultOpen onclick="openTab('Information', this)" {
-                        "Information"
-                    }
-
-                    @if !implementations.is_empty() {
-                        button .tablink onclick="openTab('Implementations', this)" {
-                            "Implementations"
-                        }
-                    }
-                }
-
-                #Information .tabcontent .wrapper {
-                    (PreEscaped(story))
-                }
-
-                @if !implementations.is_empty() {
-                    #Implementations .tabcontent .wrapper { 
-                        @for (title, content) in implementations {
-                            h2 {
-                                (title)
-                            }
-                            pre {
-                                code."language-lang=python" {
-                                    (content)
-                                }
-                            }
-                        }
-                    }
-                }
-                script {(PreEscaped(tab_js))}
-
-                @if !subpages.is_empty() {
-                    .wrapper {
-                        h2 {"Subpages"}
-                        ul {
-                            @for (name,path) in subpages {
-                                li {
-                                    a href={(path) ".html"} {(name)}
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-
-            footer {
-                "Created by Terts Diepraam"
-                    br;
-                "Source code hosted on "
-                    a href="https://github.com/tertsdiepraam/AlgoWorld" {"Github"}
-            }
-        }
-    }
-}
-
-fn process_file(path: &Path, css: &String, tab_js: &String, file_extensions: &HashMap<String, String>) -> std::io::Result<()> {
-    let mut read_file = File::open(path)?;
-    let mut markdown = String::new();
-    read_file.read_to_string(&mut markdown)?;
-
-    let options = ComrakOptions::default();
-    let html = markdown_to_html(&markdown, &options);
-
-    let implementations_vec = WalkDir::new(path.parent().unwrap())
-        .max_depth(1)
-        .into_iter()
-        .filter_map(|e| e.ok())
-        .filter(|e| e.metadata().unwrap().is_file() && e.path().file_stem() == path.file_stem());
-
-    let mut implementations = HashMap::new();
-    for entry in implementations_vec {
-        let path = entry.into_path();
-        if let Some(title) = file_extensions.get(path
-                                                 .extension()
-                                                 .expect("Failed to get extension")
-                                                 .to_str()
-                                                 .expect("Failed to turn into str")) {
-            let mut contents_file = File::open(path)?;
-            let mut contents = String::new();
-            contents_file.read_to_string(&mut contents)?;
-            implementations.insert(title.to_owned(), contents);
-        }
-    }
-
-    let mut subpages = Vec::new();
-    for entry in WalkDir::new(path.parent().unwrap())
-        .min_depth(1)
-        .max_depth(1)
-        .into_iter()
-        .filter_map(|e| e.ok())
-        .filter(|e| e.metadata().unwrap().is_dir()) {
-            let name = entry.file_name().to_str().unwrap().to_owned();
-            let mut rel_path = PathBuf::from(path.parent().unwrap().file_name().unwrap());
-            rel_path.push(name.as_str());
-            subpages.push((titlecase(&name.clone().replace("_", " ")), String::from(rel_path.to_string_lossy())));
-        }
-
-    // let write_path = path.parent().unwrap().with_extension("html");
-    let write_path = Path::new("wiki")
-        .join(path.strip_prefix("wiki_src").expect("Could not strip prefix: \"wiki_src\""))
-        .parent().unwrap()
-        .with_extension("html");
-    
-    println!("{}", write_path.display());
-    
-    create_dir_all(write_path.parent().unwrap()).expect("Could not create directory");
-    let mut write_file = File::create(write_path)?;
-    write_file.write_all(inject_content(
-        &path,
-        html,
-        &implementations,
-        &subpages,
-        css.to_string(),
-        tab_js.to_string()
-    ).into_string().as_bytes())?;
-
-    Ok(())
-}
 
 fn main() -> std::io::Result<()> {
     let args : Vec<String> = env::args().collect();
@@ -183,18 +35,53 @@ fn main() -> std::io::Result<()> {
     let mut css_file = File::open("base.css")?;
     let mut css = String::new();
     css_file.read_to_string(&mut css)?;
-    
+
     let mut tab_js_file = File::open("tab.js")?;
     let mut tab_js = String::new();
     tab_js_file.read_to_string(&mut tab_js)?;
 
+    let mut pages = HashMap::new();
+
     for entry in WalkDir::new(root_path)
         .into_iter()
         .filter_map(|e| e.ok())
-        .filter(|e| e.metadata().unwrap().is_file())
-        .filter(|e| e.file_name().to_string_lossy().ends_with(".md")) {
-        process_file(entry.path(), &css, &tab_js, &file_extensions).unwrap();
+        .filter(|e| e.metadata().unwrap().is_file() && e.file_name().to_string_lossy().ends_with(".toml")) {
+            let mut toml_file = File::open(entry.path()).unwrap();
+            let mut toml_str = String::new();
+            toml_file.read_to_string(&mut toml_str)?;
+            let page: WikiPageToml = toml::from_str(toml_str.as_str()).unwrap();
+            pages.insert(page.title.clone(), (page, entry.into_path()));
     }
+
+    // println!("{:?}", pages);
+
+    println!("Generated files:");
+
+    let ss = SyntaxSet::load_defaults_newlines();
+    let ts = ThemeSet::load_defaults();
+
+    for (_title, (page, path)) in pages {
+        let write_path = Path::new(&page.url).with_extension("html");
+        let contents = match page.page_type {
+            PageType::Algorithm => AlgorithmPage::from(page, &path, &file_extensions)
+                .unwrap()
+                .render(&css, &tab_js, &ss, &ts.themes["InspiredGitHub"])
+                .into_string(),
+            /* PageType::Category => CategoryPage::from(page, &path)
+                .unwrap()
+                .render(&css)
+                .into_string(),*/
+            _ => String::new(),
+        };
+
+        if let Some(d) = write_path.parent() {
+            create_dir_all(d)?;
+        }
+        let mut write_file = File::create(&write_path).unwrap();
+        write_file.write_all(contents.as_bytes())?;
+        println!("- {}", write_path.display());
+    }
+    // process_file(entry.path(), &css, &tab_js, &file_extensions).unwrap();
 
     Ok(())
 }

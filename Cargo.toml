@@ -9,3 +9,8 @@ comrak = "0.6.2"
 walkdir = "2"
 maud = "0.21.0"
 titlecase = "0.9"
+toml = "0.5.3"
+serde = { version = "1.0.99", features = ["derive"] }
+syntect = "3.2.1"
+
+    

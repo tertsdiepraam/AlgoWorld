@@ -1,4 +1,3 @@
-# Insertion Sort
 ## Introduction
 This algorithm kinda sucks.
 
