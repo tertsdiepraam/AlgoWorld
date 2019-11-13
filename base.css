@@ -6,7 +6,6 @@ body {
 nav {
     background-color: #ffffff;
     padding: 1em;
-    box-shadow: 0px 5px 3px grey;
 }
 
 .page {
@@ -17,20 +16,20 @@ nav {
 
 .wrapper {
     background-color: #ffffff;
-    padding: 20px;
-    padding-top: 20px;
-    box-shadow: 5px 5px 3px grey;
+    padding: 30px;
+    padding-top: 10px;
 }
 
 .tablink {
     background-color: #dddddd;
-    float: left;
     border: none;
-    outline: none;
     cursor: pointer;
     padding: 14px 16px;
-    font-size: 17px;
     width: 50%;
+}
+
+.search {
+    float: right;
 }
 
 footer {
@@ -39,4 +38,10 @@ footer {
     margin: auto;
     margin-top: 20px;
     margin-bottom: 20px;
+}
+
+pre {
+    border: 1px solid grey;
+    border-radius: 3px;
+    padding: 20px;
 }

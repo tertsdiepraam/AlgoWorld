@@ -12,9 +12,11 @@ use std::{
 };
 use walkdir::WalkDir;
 use comrak::{markdown_to_html, ComrakOptions};
-use syntect::parsing::SyntaxSet;
-use syntect::highlighting::Theme;
-use syntect::html::highlighted_html_for_string;
+use syntect::{
+    parsing::SyntaxSet,
+    highlighting::Theme,
+    html::highlighted_html_for_string,
+};
 
 #[derive(Deserialize, Debug)]
 pub enum PageType {
@@ -29,7 +31,7 @@ pub struct WikiPageToml {
     pub page_type: PageType,
     pub url: String,
 
-    pub related_pages: Option<Vec<String>>,
+    pub related: Option<Vec<String>>,
     pub categories: Option<Vec<String>>,
     // @TODO: Time & Space complexity
 
@@ -40,21 +42,42 @@ pub struct WikiPageToml {
 pub struct AlgorithmPage {
     pub title: String,
     pub url: String,
-    pub related_pages: Vec<String>,
+    pub related: Vec<String>,
     pub categories: Vec<String>,
     pub information: Markup,
     pub implementations: HashMap<String, String>
 }
 
-fn base_page(content: Markup, css: &String) -> Markup {
+fn base_page(content: Markup) -> Markup {
     html! {
         (DOCTYPE);
         head {
             meta charset="UTF-8";
-            style {(css)}
+            link
+                rel="stylesheet"
+                href="/base.css";
+            link
+                rel="stylesheet"
+                href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"
+                integrity="sha384-zB1R0rpPzHqg7Kpt0Aljp8JPLqbXI3bhnPWROx27a9N0Ll6ZP/+DiW/UqRcLbRjq"
+                crossorigin="anonymous";
+            script
+                src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"
+                integrity="sha384-y23I5Q6l+B6vatafAwxRu/0oK/79VlbSz7Q9aiSZUvyWYIYsd+qj+o24G5ZU2zJz"
+                crossorigin="anonymous"{}
+            script
+                src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"
+                integrity="sha384-kWPLUVMOks5AQFrykwIup5lo0m3iMkkHrD0uJ4H5cjeGihAutqP0yW0J6dpFiVkI"
+                crossorigin="anonymous"{}
+            script {
+                (PreEscaped("document.addEventListener(\"DOMContentLoaded\", () => {renderMathInElement(document.body)});"))
+            }
         }
         body {
-            nav {"Homepage etc."}
+            nav {
+                "AlgoWorld";
+                input .search type="text" placeholder="Search..." name="Search";
+            }
             .page {(content)}
             footer {
                 "Created by Terts Diepraam" br;
@@ -65,18 +88,32 @@ fn base_page(content: Markup, css: &String) -> Markup {
     }
 }
 
+fn generate_links(titles: &Vec<String>, url_lookup: &HashMap<String, String>) -> Markup {
+    html! {
+        @for (i, title) in titles.iter().enumerate() {
+            @if i > 0 {", "}
+            a href={"/" (url_lookup[title]) ".html"} {(title)}
+        }
+    }
+}
+
 impl AlgorithmPage {
     pub fn from(page_toml: WikiPageToml, path: &Path, file_extensions: &HashMap<String, String>) -> std::io::Result<AlgorithmPage> {
         Ok(AlgorithmPage {
             title: page_toml.title,
             url: page_toml.url,
-            related_pages: page_toml.related_pages.unwrap_or(Vec::new()),
+            related: page_toml.related.unwrap_or(Vec::new()),
             categories: page_toml.categories.unwrap_or(Vec::new()),
             information: {
-                let mut read_file = File::open(path.with_extension("md"))?;
                 let mut markdown = String::new();
-                read_file.read_to_string(&mut markdown)?;
-                let options = ComrakOptions::default();
+                if let Ok(mut read_file) = File::open(path.with_extension("md")) {
+                    read_file.read_to_string(&mut markdown)?;
+                }
+                let options = ComrakOptions {
+                    ext_footnotes: true,
+                    unsafe_: true,
+                    ..ComrakOptions::default()
+                };
                 PreEscaped(markdown_to_html(&markdown, &options))
             },
             implementations: {
@@ -99,7 +136,6 @@ impl AlgorithmPage {
                         let mut content = String::new();
                         content_file.read_to_string(&mut content)?;
                         implementations.insert(title.to_owned(), content);
-                        println!("{:?}", implementations);
                     }
                 }
                 implementations
@@ -107,9 +143,17 @@ impl AlgorithmPage {
         })
     }
 
-    pub fn render(&self, css: &String, tab_js: &String, ss: &SyntaxSet, theme: &Theme) -> Markup {
+    pub fn render(&self, url_lookup: &HashMap<String, String>, ss: &SyntaxSet, theme: &Theme) -> Markup {
         base_page(html! {
             h1 {(self.title)}
+            p {
+                "Related: ";
+                (generate_links(&self.related, url_lookup))
+            }
+            p {
+                "Categories: ";
+                (generate_links(&self.categories, url_lookup))
+            }
             div {
                 button .tablink #defaultOpen onclick="openTab('Information', this)" {
                     "Information"
@@ -129,19 +173,17 @@ impl AlgorithmPage {
             @if !self.implementations.is_empty() {
                 #Implementations .tabcontent .wrapper {
                     @for (title, content) in &self.implementations {
-                        h1 {
+                        h2 {
                             (title)
                         }
-                        pre {
-                            code {
-                                (PreEscaped(highlighted_html_for_string(&content, &ss, &ss.find_syntax_by_name(title).unwrap(), &theme)))
-                            }
+                        code {
+                            (PreEscaped(highlighted_html_for_string(&content, &ss, &ss.find_syntax_by_name(title).unwrap(), &theme)))
                         }
                     }
                 }
             }
-            script {(PreEscaped(tab_js))}
-        }, &css)
+            script src="/tab.js"{}
+        })
     }
 }
 

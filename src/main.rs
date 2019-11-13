@@ -32,14 +32,6 @@ fn main() -> std::io::Result<()> {
         file_extensions.insert(values[0].trim().to_owned(), values[1].trim().to_owned());
     }
 
-    let mut css_file = File::open("base.css")?;
-    let mut css = String::new();
-    css_file.read_to_string(&mut css)?;
-
-    let mut tab_js_file = File::open("tab.js")?;
-    let mut tab_js = String::new();
-    tab_js_file.read_to_string(&mut tab_js)?;
-
     let mut pages = HashMap::new();
 
     for entry in WalkDir::new(root_path)
@@ -59,13 +51,19 @@ fn main() -> std::io::Result<()> {
 
     let ss = SyntaxSet::load_defaults_newlines();
     let ts = ThemeSet::load_defaults();
+    let theme = &ts.themes["InspiredGitHub"];
+
+    let url_lookup : HashMap<String, String> = pages
+        .iter()
+        .map(|(title, (page, _))| (title.clone(), page.url.clone()))
+        .collect();
 
     for (_title, (page, path)) in pages {
         let write_path = Path::new(&page.url).with_extension("html");
         let contents = match page.page_type {
             PageType::Algorithm => AlgorithmPage::from(page, &path, &file_extensions)
                 .unwrap()
-                .render(&css, &tab_js, &ss, &ts.themes["InspiredGitHub"])
+                .render(&url_lookup, &ss, &theme)
                 .into_string(),
             /* PageType::Category => CategoryPage::from(page, &path)
                 .unwrap()
