@@ -97,6 +97,19 @@ fn generate_links(titles: &Vec<String>, url_lookup: &HashMap<String, String>) ->
     }
 }
 
+fn render_markdown(path: &Path) -> std::io::Result<Markup> {
+    let mut markdown = String::new();
+    if let Ok(mut read_file) = File::open(path.with_extension("md")) {
+        read_file.read_to_string(&mut markdown)?;
+    }
+    let options = ComrakOptions {
+        ext_footnotes: true,
+        unsafe_: true,
+        ..ComrakOptions::default()
+    };
+    Ok(PreEscaped(markdown_to_html(&markdown, &options)))
+}
+
 impl AlgorithmPage {
     pub fn from(page_toml: WikiPageToml, path: &Path, file_extensions: &HashMap<String, String>) -> std::io::Result<AlgorithmPage> {
         Ok(AlgorithmPage {
@@ -104,18 +117,7 @@ impl AlgorithmPage {
             url: page_toml.url,
             related: page_toml.related.unwrap_or(Vec::new()),
             categories: page_toml.categories.unwrap_or(Vec::new()),
-            information: {
-                let mut markdown = String::new();
-                if let Ok(mut read_file) = File::open(path.with_extension("md")) {
-                    read_file.read_to_string(&mut markdown)?;
-                }
-                let options = ComrakOptions {
-                    ext_footnotes: true,
-                    unsafe_: true,
-                    ..ComrakOptions::default()
-                };
-                PreEscaped(markdown_to_html(&markdown, &options))
-            },
+            information: render_markdown(path)?,
             implementations: {
                 let implementations_vec = WalkDir::new(path.parent().unwrap())
                     .max_depth(1)
@@ -190,7 +192,32 @@ impl AlgorithmPage {
 pub struct CategoryPage {
     pub title: String,
     pub url: String,
-    pub related_pages: Vec<String>,
+    pub related: Vec<String>,
     pub information: Markup,
-    pub pages: Vec<String>,
+    pub subpages: Vec<String>,
+}
+
+impl CategoryPage {
+    pub fn from(page_toml: WikiPageToml, path: &Path) -> std::io::Result<CategoryPage> {
+        Ok(CategoryPage {
+            title: page_toml.title,
+            url: page_toml.url,
+            related: page_toml.related.unwrap_or(Vec::new()),
+            information: render_markdown(path)?,
+            subpages: page_toml.subpages.unwrap_or(Vec::new()),
+        })
+    }
+
+    pub fn render(&self, url_lookup: &HashMap<String, String>) -> Markup {
+        base_page(html! {
+            h1 {(self.title)}
+            #Information .wrapper {
+                (self.information);
+                h1 {"Pages"}
+                @for title in &self.subpages {
+                    p {a href={"/" (url_lookup[title]) ".html"} {(title)}}
+                }
+            }
+        })
+    }
 }
