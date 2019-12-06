@@ -1,0 +1,6 @@
+title = "AlgoWorld"
+page_type = "Category"
+url = "index"
+subpages = [
+    "Sorting Algorithms",
+]

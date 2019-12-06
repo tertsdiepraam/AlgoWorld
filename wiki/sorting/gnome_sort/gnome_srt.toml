@@ -1,0 +1,6 @@
+title = "Gnome Sort"
+page_type = "Algorithm"
+url = "wiki/gnome_sort"
+related = [
+        "Insertion Sort"
+]
