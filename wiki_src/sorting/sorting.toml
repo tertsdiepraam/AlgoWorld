@@ -1,8 +1,0 @@
-title = "Sorting Algorithms"
-page_type = "Category"
-url = "wiki/sorting"
-subpages = [
-    "Insertion Sort",
-    "Gnome Sort",
-    "Shellsort",
-]

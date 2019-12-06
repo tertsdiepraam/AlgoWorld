@@ -69,7 +69,7 @@ fn main() -> std::io::Result<()> {
 
     println!("Generated files:");
     for (_, (page, path)) in pages {
-        let write_path = Path::new(&page.url).with_extension("html");
+        let write_path = Path::new("dist/").join(&page.url).with_extension("html");
         let contents = match page.page_type {
             PageType::Algorithm => AlgorithmPage::from(page, &path, &file_extensions)
                 .expect(format!("Could not render page at {}", write_path.file_name().unwrap().to_string_lossy()).as_str())
