@@ -28,7 +28,15 @@ end function
 </li>
 </ol>
 </section>
-</div><div class="tabcontent wrapper" id="Implementations"><h2>Rust</h2><code><pre style="background-color:#ffffff;">
+</div><div class="tabcontent wrapper" id="Implementations"><h2>Python</h2><code><pre style="background-color:#ffffff;">
+<span style="font-weight:bold;color:#a71d5d;">def </span><span style="font-weight:bold;color:#323232;">insertion_sort</span><span style="color:#323232;">(a):
+</span><span style="color:#323232;">    </span><span style="font-weight:bold;color:#a71d5d;">for </span><span style="color:#323232;">i </span><span style="font-weight:bold;color:#a71d5d;">in </span><span style="color:#62a35c;">range</span><span style="color:#323232;">(</span><span style="color:#0086b3;">1</span><span style="color:#323232;">, </span><span style="color:#62a35c;">len</span><span style="color:#323232;">(a)):
+</span><span style="color:#323232;">        j </span><span style="font-weight:bold;color:#a71d5d;">= </span><span style="color:#323232;">i
+</span><span style="color:#323232;">        </span><span style="font-weight:bold;color:#a71d5d;">while </span><span style="color:#323232;">j </span><span style="font-weight:bold;color:#a71d5d;">&gt; </span><span style="color:#0086b3;">0 </span><span style="font-weight:bold;color:#a71d5d;">and </span><span style="color:#323232;">a[j</span><span style="font-weight:bold;color:#a71d5d;">-</span><span style="color:#0086b3;">1</span><span style="color:#323232;">] </span><span style="font-weight:bold;color:#a71d5d;">&gt; </span><span style="color:#323232;">a[j]:
+</span><span style="color:#323232;">            a[j</span><span style="font-weight:bold;color:#a71d5d;">-</span><span style="color:#0086b3;">1</span><span style="color:#323232;">], a[j] </span><span style="font-weight:bold;color:#a71d5d;">= </span><span style="color:#323232;">a[j], a[j</span><span style="font-weight:bold;color:#a71d5d;">-</span><span style="color:#0086b3;">1</span><span style="color:#323232;">]
+</span><span style="color:#323232;">            j </span><span style="font-weight:bold;color:#a71d5d;">-= </span><span style="color:#0086b3;">1
+</span></pre>
+</code><h2>Rust</h2><code><pre style="background-color:#ffffff;">
 <span style="font-weight:bold;color:#a71d5d;">fn </span><span style="font-weight:bold;color:#795da3;">insertion_sort</span><span style="color:#323232;">&lt;T&gt;(a: </span><span style="font-weight:bold;color:#a71d5d;">&amp;mut</span><span style="color:#323232;"> [T]) 
 </span><span style="color:#323232;">    </span><span style="font-weight:bold;color:#a71d5d;">where</span><span style="color:#323232;"> T: Ord
 </span><span style="color:#323232;">{
@@ -40,13 +48,5 @@ end function
 </span><span style="color:#323232;">        }
 </span><span style="color:#323232;">    }
 </span><span style="color:#323232;">}
-</span></pre>
-</code><h2>Python</h2><code><pre style="background-color:#ffffff;">
-<span style="font-weight:bold;color:#a71d5d;">def </span><span style="font-weight:bold;color:#323232;">insertion_sort</span><span style="color:#323232;">(a):
-</span><span style="color:#323232;">    </span><span style="font-weight:bold;color:#a71d5d;">for </span><span style="color:#323232;">i </span><span style="font-weight:bold;color:#a71d5d;">in </span><span style="color:#62a35c;">range</span><span style="color:#323232;">(</span><span style="color:#0086b3;">1</span><span style="color:#323232;">, </span><span style="color:#62a35c;">len</span><span style="color:#323232;">(a)):
-</span><span style="color:#323232;">        j </span><span style="font-weight:bold;color:#a71d5d;">= </span><span style="color:#323232;">i
-</span><span style="color:#323232;">        </span><span style="font-weight:bold;color:#a71d5d;">while </span><span style="color:#323232;">j </span><span style="font-weight:bold;color:#a71d5d;">&gt; </span><span style="color:#0086b3;">0 </span><span style="font-weight:bold;color:#a71d5d;">and </span><span style="color:#323232;">a[j</span><span style="font-weight:bold;color:#a71d5d;">-</span><span style="color:#0086b3;">1</span><span style="color:#323232;">] </span><span style="font-weight:bold;color:#a71d5d;">&gt; </span><span style="color:#323232;">a[j]:
-</span><span style="color:#323232;">            a[j</span><span style="font-weight:bold;color:#a71d5d;">-</span><span style="color:#0086b3;">1</span><span style="color:#323232;">], a[j] </span><span style="font-weight:bold;color:#a71d5d;">= </span><span style="color:#323232;">a[j], a[j</span><span style="font-weight:bold;color:#a71d5d;">-</span><span style="color:#0086b3;">1</span><span style="color:#323232;">]
-</span><span style="color:#323232;">            j </span><span style="font-weight:bold;color:#a71d5d;">-= </span><span style="color:#0086b3;">1
 </span></pre>
 </code></div><script src="/tab.js"></script></div><footer>Created by Terts Diepraam<br>Source code hosted on <a href="https://github.com/tertsdiepraam/AlgoWorld">Github</a></footer></body>
